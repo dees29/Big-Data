@@ -1,0 +1,55 @@
+1. Create the Table
+create table employee_stp(name string,location string,extn int) 
+partitioned by (desig string)  
+row format delimited fields terminated by ',' stored as textfile;
+
+
+2. See the schema
+describe employee_stp;
+
+******************* STATIC PARTITION **************************************
+3. Load the data using Static Partition:
+load data local inpath '/home/cloudera/hive180520/employee_SE.txt' into table employee_stp partition (desig = 'SE');
+load data local inpath '/home/cloudera/hive180520/employee_SSE.txt' into table employee_stp partition (desig = 'SSE');
+load data local inpath '/home/cloudera/hive180520/employee_Lead.txt' into table employee_stp partition (desig = 'Lead');
+
+
+4. Query the data
+select * from employee_spr where desig = 'SE' and name = 'HarishSE';
+
+
+5. Can also see from '/user/hive/warehouse/hive180519.db/employee_spr/'
+
+******************* STATIC PARTITION END **************************************
+
+
+******************* DYNAMIC PARTITION **************************************
+6. 
+#Dynamic Partitioning
+
+Step A: Create a Internal Table ( It can be delta load coming from different servers daily)
+create table employee_full(name string,location string,extn int, desig string)  
+row format delimited fields terminated by ',' stored as textfile;
+
+load data local inpath '/home/cloudera/hive180520/employee.txt' into table employee_full;
+
+select * from employee_full;
+
+
+Step B: Put data from Internal table in Step A to Step B Dynamic Table ( It can be delta load coming from different servers daily)
+create table employee_dyp(name string,location string,extn int) 
+partitioned by (desig string)  
+row format delimited fields terminated by ',' stored as textfile;
+
+
+set hive.exec.dynamic.partition=true;
+set hive.exec.dynamic.partition.mode=nonstrict;
+set hive.exec.max.dynamic.partitions=100;
+set hive.exec.max.dynamic.partitions.pernode=100;
+
+
+insert into table employee_dyp partition(desig) select name,location, extn, desig from employee_full;
+
+******************* DYNAMIC PARTITION END **************************************
+
+

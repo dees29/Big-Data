@@ -1,0 +1,72 @@
+File Structure is as below
+txnno, ymd, custno, amount, category, product, city, state, pymmth
+
+
+1: Create a table HIVE and map it to HBase.
+a. [cloudera@quickstart ~]$ hive;
+
+b. Create table
+CREATE TABLE trans180616
+(
+txnno int,
+ymd string,
+custno int,
+amount float,
+category string,
+product string,
+city string,
+state string,
+pymmth string
+) 
+
+STORED BY 'org.apache.hadoop.hive.hbase.HBaseStorageHandler' 
+
+WITH SERDEPROPERTIES 
+("hbase.columns.mapping"="
+:key,details:ymd,details:custno,details:amount,details:category,details:product,details:city,details:state,details:pymmth") 
+
+TBLPROPERTIES ("hbase.table.name"="trans180616_hbase");
+
+
+2 Check the table in Hbase and Hive
+a. [cloudera@quickstart ~]$ hbase shell
+
+b. 
+hbase(main):001:0> list
+hbase(main):001:1> describe 'trans180616_hbase'
+hbase(main):001:2> quit
+
+c. [cloudera@quickstart ~]$ hive
+
+d. 
+hive> show tables;
+hive> describe extended trans180616;
+hive> quit;
+
+3. Load the transaction data from HDFS into the HBase table created {First out from linux to HDFS}
+hbase org.apache.hadoop.hbase.mapreduce.ImportTsv '-Dimporttsv.separator=,' -Dimporttsv.columns=HBASE_ROW_KEY,details:ymd,details:custno,details:amount,details:category,details:product,details:city,details:state,details:pymmth trans180616_hbase /user/cloudera/transactions.txt;
+
+
+Step 4: Check data in Hbase and HIVE
+a. [cloudera@localhost ~]$ hbase shell
+
+b.
+hbase(main):001:0> scan 'trans180616_hbase'
+hbase(main):001:2> quit
+
+c. [cloudera@localhost ~]$ hive
+
+d.
+hive> select * from trans180616 limit 5;
+hive> quit;
+
+
+5. Query from impala. 
+select * from trans180616 action limit 5;
+{If table not appears write "invalidate metadata"}
+
+
+Can do Row level update in Impala that is not much efficient in HIVE
+insert into trans180616 (txnno, ymd, custno, amount, category, product, city, state, pymmth) values(25000,"06-26-2018",4007124,41.33,"Exercise & Fitness","Cardio Machine Accessories 2","Clarksville","Tennessee","cash")
+select * from trans180616 where txnno = 25000
+

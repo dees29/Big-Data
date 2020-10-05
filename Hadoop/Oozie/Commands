@@ -1,0 +1,66 @@
+1. Check the status of Oozie
+[cloudera@quickstart ~]$ service oozie status
+running
+
+
+2. Unzip examples.tar.gz and Save the examples folder shared in google drive at path /home/cloudera/oozie180623/
+
+
+3. Move /home/cloudera/oozie180623/examples (linux) to (hdfs) /user/cloudera/examples/
+[cloudera@quickstart ~]$ cd oozie180623
+[cloudera@quickstart oozie180623]$ hdfs dfs -put -f examples/
+
+
+4. Map Reduce Job scheduling in Oozie
+
+Go to /home/cloudera/oozie180623/examples/examples/apps/map-reduce
+
+a. You will find job.properties and workflow.xml
+b. lib will have your programs .jar or .py or etc
+c. See job.properties. It has all the variables for which we need to specify the values.
+d. Use this command to run the job:
+[cloudera@quickstart oozie180623]$ oozie job -oozie http://localhost:11000/oozie -config /home/cloudera/oozie180623/examples/apps/map-reduce/job.properties -run
+job: 0000000-180622210939592-oozie-oozi-W
+e. See the job is running in below URL:
+http://quickstart.cloudera:11000/oozie/
+- Can double click on job to see details.
+f. After Double click, can go to joblog tab and the click on get log.
+g. To get logs, can also see in "http://quickstart.cloudera:8088/cluster" or click hadoop>>Resourcemanager from book mark.
+h. See the output at directory given in workflow.xml
+i. To see the log: 
+[cloudera@quickstart oozie180623]$ oozie job -oozie http://localhost:11000/oozie -log  0000000-180623161110317-oozie-oozi-W
+
+
+NOTE: Need to use 
+1. [cloudera@quickstart oozie180623]$ oozie help job
+or
+2. [cloudera@quickstart ~]$ oozie help
+
+
+5. Sqoop Job
+Go to /home/cloudera/oozie180623/examples/examples/apps/sqoop 
+a. You will find job.properties and workflow.xml 
+b. Use this command to run the job:
+[cloudera@quickstart oozie180623]$ oozie job -oozie http://localhost:11000/oozie -config /home/cloudera/oozie180623/examples/apps/sqoop/job.properties -run
+c. See the output at directory given in workflow.xml
+
+
+6. Hive Job
+Go to /home/cloudera/oozie180623/examples/examples/apps/hive
+a. You will find job.properties and workflow.xml 
+b. Use this command to run the job:
+[cloudera@quickstart oozie180623]$ oozie job -oozie http://localhost:11000/oozie -config /home/cloudera/oozie180623/examples/apps/hive/job.properties -run
+c. See the output at directory given in workflow.xml
+
+
+7. Using Co-ordinator
+Go to /home/cloudera/oozie180623/examples/examples/apps/aggregator
+a. You will find job.properties, workflow.xml and coordinator.xml (Set the time in coordinator.xml)
+b. Use this command to run the job:
+[cloudera@quickstart oozie180623]$ oozie job -oozie http://localhost:11000/oozie -config /home/cloudera/oozie180623/examples/apps/aggregator/job.properties -run
+job: 0000002-180623161110317-oozie-oozi-C
+Note: -c indicates co-ordinator job. 
+c. To check the info
+[cloudera@quickstart oozie180623]$ oozie job -oozie http://localhost:11000/oozie -info 0000002-180623161110317-oozie-oozi-C
+d. To Kill the job
+[cloudera@quickstart oozie180623]$ oozie job -oozie http://localhost:11000/oozie -kill 0000002-180623161110317-oozie-oozi-C

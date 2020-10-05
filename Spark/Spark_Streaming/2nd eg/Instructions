@@ -1,0 +1,37 @@
+A. Start New session - Session 1
+1. connect to port 4444 useing netcat
+[cloudera@quickstart ~]$ nc -lk 4444
+
+B. Start another session - Session 2
+
+1. Start spark-shell
+[cloudera@quickstart ~]$ spark-shell
+
+
+2. Import streaming context
+scala> sc.setLogLevel("WARN")
+scala> import org.apache.spark.streaming.{StreamingContext, Seconds}
+import org.apache.spark.streaming.{StreamingContext, Seconds}
+
+
+3. New Streaming Context
+scala> val ssc = new StreamingContext(sc, Seconds(2))
+ssc: org.apache.spark.streaming.StreamingContext = org.apache.spark.streaming.StreamingContext@6da52c18
+
+4. Create Streams
+scala> val streams = ssc.socketTextStream("localhost",4444,org.apache.spark.storage.StorageLevel.MEMORY_ONLY)
+streams: org.apache.spark.streaming.dstream.ReceiverInputDStream[String] = org.apache.spark.streaming.dstream.SocketInputDStream@6062b0bf
+
+
+5. Split by spaces
+scala> val wordcount = streams.flatMap(_.split(" ")).map(w => (w,1)).reduceByKey(_+_)
+wordcount: org.apache.spark.streaming.dstream.DStream[(String, Int)] = org.apache.spark.streaming.dstream.ShuffledDStream@1bbdf69a
+
+5. Print
+scala> wordcount.print
+
+6. Start streaming context
+scala> ssc.start
+
+C. In Session 1, 
+type random data "aaa bbb aaa ccc aaa" and press enter to see output in Session 2

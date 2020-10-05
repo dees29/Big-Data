@@ -1,0 +1,221 @@
+Commands we practised today
+
+1. To  start spark shell
+[cloudera@quickstart ~]$ spark-shell
+
+
+2. Change Log Level to ERROR
+scala> sc.setLogLevel("ERROR")
+
+
+3. Load from text file book.txt
+scala> val book = sc.textFile("book.txt")
+
+
+scala> book.collect
+res1: Array[String] = Array(1. Paradigms of Artificial Intelligence Programming: Case Studies in Common Lisp, 2. Code: The Hidden Language of Computer Hardware and Software, 3. An introduction to algorithms, 4. Artificial Intelligence: a modern approach, 5. ON LISP, 6. ANSI COMMON LISP, 7. LISP IN SMALL PIECES, 8. THE LITTLE LISPER, 9. THE SEASONED SCHEMER)
+
+
+4. Word count
+
+scala> val a = book.flatMap( x => x.split(" ")).map(y => (y,1)).reduceByKey((x,y) => (x+y)).collect
+a: Array[(String, Int)] = Array((Software,1), (Artificial,2), (5.,1), (Hardware,1), (The,1), (THE,2), (7.,1), (ANSI,1), (Intelligence,1), (Code:,1), (COMMON,1), (SMALL,1), (1.,1), (SEASONED,1), (in,1), (ON,1), (Programming:,1), (3.,1), (PIECES,1), (Intelligence:,1), (9.,1), (4.,1), (Language,1), (IN,1), (Case,1), (2.,1), (SCHEMER,1), (Hidden,1), (Computer,1), (Studies,1), (a,1), (introduction,1), (LISPER,1), (Paradigms,1), (to,1), (Common,1), (of,2), (Lisp,1), (An,1), (8.,1), (approach,1), (and,1), (LITTLE,1), (6.,1), (LISP,3), (algorithms,1), (modern,1))
+
+
+5. a. Sort by Key
+sortBy(_._1)
+scala> val a = book.flatMap( x => x.split(" ")).map(y => (y,1)).reduceByKey((x,y) => (x+y)).sortBy(_._1).collect
+a: Array[(String, Int)] = Array((1.,1), (2.,1), (3.,1), (4.,1), (5.,1), (6.,1), (7.,1), (8.,1), (9.,1), (ANSI,1), (An,1), (Artificial,2), (COMMON,1), (Case,1), (Code:,1), (Common,1), (Computer,1), (Hardware,1), (Hidden,1), (IN,1), (Intelligence,1), (Intelligence:,1), (LISP,3), (LISPER,1), (LITTLE,1), (Language,1), (Lisp,1), (ON,1), (PIECES,1), (Paradigms,1), (Programming:,1), (SCHEMER,1), (SEASONED,1), (SMALL,1), (Software,1), (Studies,1), (THE,2), (The,1), (a,1), (algorithms,1), (and,1), (approach,1), (in,1), (introduction,1), (modern,1), (of,2), (to,1))
+
+
+scala> val a = book.flatMap( x => x.split(" ")).map(y => (y,1)).reduceByKey((x,y) => (x+y)).sortBy(_._1, false).collect
+a: Array[(String, Int)] = Array((to,1), (of,2), (modern,1), (introduction,1), (in,1), (approach,1), (and,1), (algorithms,1), (a,1), (The,1), (THE,2), (Studies,1), (Software,1), (SMALL,1), (SEASONED,1), (SCHEMER,1), (Programming:,1), (Paradigms,1), (PIECES,1), (ON,1), (Lisp,1), (Language,1), (LITTLE,1), (LISPER,1), (LISP,3), (Intelligence:,1), (Intelligence,1), (IN,1), (Hidden,1), (Hardware,1), (Computer,1), (Common,1), (Code:,1), (Case,1), (COMMON,1), (Artificial,2), (An,1), (ANSI,1), (9.,1), (8.,1), (7.,1), (6.,1), (5.,1), (4.,1), (3.,1), (2.,1), (1.,1))
+
+
+
+
+b. Sort by Value
+sortBy(_._2)
+scala> val a = book.flatMap( x => x.split(" ")).map(y => (y,1)).reduceByKey((x,y) => (x+y)).sortBy(_._2, false).collect
+a: Array[(String, Int)] = Array((LISP,3), (Artificial,2), (THE,2), (of,2), (Software,1), (5.,1), (Hardware,1), (The,1), (7.,1), (ANSI,1), (Intelligence,1), (Code:,1), (COMMON,1), (SMALL,1), (1.,1), (SEASONED,1), (in,1), (ON,1), (Programming:,1), (3.,1), (PIECES,1), (Intelligence:,1), (9.,1), (4.,1), (Language,1), (IN,1), (Case,1), (2.,1), (SCHEMER,1), (Hidden,1), (Computer,1), (Studies,1), (a,1), (introduction,1), (LISPER,1), (Paradigms,1), (to,1), (Common,1), (Lisp,1), (An,1), (8.,1), (approach,1), (and,1), (LITTLE,1), (6.,1), (algorithms,1), (modern,1))
+
+
+
+6. Filter
+scala> val a = book.flatMap( x => x.split(" ")).map(y => (y,1)).reduceByKey((x,y) => (x+y)).sortBy(_._2, false).filter(_._2 > 1).collect
+a: Array[(String, Int)] = Array((LISP,3), (Artificial,2), (THE,2), (of,2))
+
+
+scala> val a = book.flatMap( x => x.split(" ")).map(y => (y,1)).reduceByKey((x,y) => (x+y)).sortBy(_._2, false).filter(_._1.contains("a")).collect
+a: Array[(String, Int)] = Array((Artificial,2), (Software,1), (Hardware,1), (Programming:,1), (Language,1), (Case,1), (a,1), (Paradigms,1), (approach,1), (and,1), (algorithms,1))
+
+scala> val a = book.flatMap( x => x.split(" ")).map(y => (y,1)).reduceByKey((x,y) => (x+y)).sortBy(_._2, false).filter(_._1.equals("a")).collect
+a: Array[(String, Int)] = Array((a,1))
+
+
+7. To see Job, stage and task go to "localhost:4040" from browser
+
+Job>>Stages>> Tasks
+
+
+
+Second Half
+Practicing Transformation examples
+
+1. Map
+scala> val a = sc.parallelize(List("mumbai", "delhi", "chennai", "kolkatta"))
+
+scala> val b = a.map(x => (x,1))
+scala> b.collect
+res2: Array[(String, Int)] = Array((mumbai,1), (delhi,1), (chennai,1), (kolkatta,1))
+
+Same thing using shorthand notation.
+scala> val b = a.map((_,1))
+scala> b.collect
+res3: Array[(String, Int)] = Array((mumbai,1), (delhi,1), (chennai,1), (kolkatta,1))
+
+
+scala> val b = a.map(x => (x,x.length))
+scala> b.collect
+res4: Array[(String, Int)] = Array((mumbai,6), (delhi,5), (chennai,7), (kolkatta,8))
+
+
+2. flatMap
+scala> val a = sc.parallelize(List(1,2,3)).map(x => List(x,x,x)).collect
+a: Array[List[Int]] = Array(List(1, 1, 1), List(2, 2, 2), List(3, 3, 3))
+
+
+
+scala> val a = sc.parallelize(List(1,2,3)).flatMap(x => List(x,x,x)).collect
+a: Array[Int] = Array(1, 1, 1, 2, 2, 2, 3, 3, 3)
+
+
+3. filter (///lar to where condition)
+scala> val a = sc.parallelize(List("mumbai", "delhi", "chennai", "kolkatta")).filter(_.equals("mumbai")).collect
+a: Array[String] = Array(mumbai)
+
+
+scala> val a = sc.parallelize(List("mumbai", "delhi", "chennai", "kolkatta")).filter(_.contains("e")).collect
+a: Array[String] = Array(delhi, chennai)
+
+
+scala> val a = sc.parallelize(List(("mumbai",4000), ("delhi",2000), ("chennai",1000), ("kolkatta",7000))).filter(_._2.equals(4000)).collect
+a: Array[(String, Int)] = Array((mumbai,4000))
+
+scala> val a = sc.parallelize(List(("mumbai",4000), ("delhi",2000), ("chennai",1000), ("kolkatta",7000))).filter(_._2>3000).collect
+a: Array[(String, Int)] = Array((mumbai,4000), (kolkatta,7000))
+
+
+scala> val a = sc.parallelize(List((4000,"mumbai"), (2000,"delhi"), (1000,"chennai"), (7000,"kolkatta"))).filterByRange(3000,9000).collect 
+a: Array[(Int, String)] = Array((4000,mumbai), (7000,kolkattta))
+
+
+4. sample (false/true , fraction, seed)
+false - can have repeated value. true - not have repeated values
+fraction - 0 to 1. no of samples in o/p
+seed - result will be same
+
+scala> val a = sc.parallelize(1 to 100)
+
+A. If you give the seed, every time result of sample will be same
+scala> a.sample(false, .2,5).collect
+res3: Array[Int] = Array(3, 7, 11, 14, 25, 35, 43, 44, 45, 47, 48, 57, 61, 66, 68, 88, 96, 97)
+
+scala> a.sample(false, .2,5).collect
+res4: Array[Int] = Array(3, 7, 11, 14, 25, 35, 43, 44, 45, 47, 48, 57, 61, 66, 68, 88, 96, 97)
+
+scala> a.sample(false, .2).collect
+res5: Array[Int] = Array(2, 8, 25, 32, 33, 38, 42, 43, 53, 56, 62, 74, 90, 92, 93, 94, 97)
+
+scala> a.sample(false, .2).collect
+res6: Array[Int] = Array(4, 10, 11, 12, 14, 33, 35, 48, 60, 66, 73, 83, 84, 89, 95, 98)
+
+
+
+B. More the fraction value, bigger is the sample
+scala> a.sample(false, .2,5).collect
+res7: Array[Int] = Array(3, 7, 11, 14, 25, 35, 43, 44, 45, 47, 48, 57, 61, 66, 68, 88, 96, 97)
+
+scala> a.sample(false, .4,5).collect
+res8: Array[Int] = Array(2, 4, 6, 7, 12, 17, 21, 22, 23, 24, 25, 29, 31, 34, 35, 44, 48, 49, 52, 56, 66, 68, 73, 75, 77, 79, 80, 81, 83, 84, 88, 90, 91, 95, 96, 97, 100)
+
+scala> a.sample(false, .8,5).collect
+res9: Array[Int] = Array(1, 2, 3, 4, 5, 6, 7, 10, 12, 13, 14, 15, 16, 17, 19, 20, 21, 22, 23, 24, 25, 26, 27, 29, 31, 32, 34, 35, 37, 38, 40, 41, 42, 43, 44, 46, 47, 48, 49, 50, 52, 53, 54, 55, 56, 57, 58, 60, 61, 62, 63, 64, 67, 70, 71, 73, 74, 76, 77, 78, 79, 80, 81, 83, 84, 85, 86, 87, 88, 90, 92, 94, 95, 96, 97, 100)
+
+scala> a.sample(false, 1,5).collect
+res10: Array[Int] = Array(1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39, 40, 41, 42, 43, 44, 45, 46, 47, 48, 49, 50, 51, 52, 53, 54, 55, 56, 57, 58, 59, 60, 61, 62, 63, 64, 65, 66, 67, 68, 69, 70, 71, 72, 73, 74, 75, 76, 77, 78, 79, 80, 81, 82, 83, 84, 85, 86, 87, 88, 89, 90, 91, 92, 93, 94, 95, 96, 97, 98, 99, 100)
+
+
+
+C. With repetation false/true
+
+scala>  val a = sc.parallelize(List(1,2,1,1,1,2))
+
+scala> a.sample(true, .4,5).collect
+res6: Array[Int] = Array(2, 1)
+
+scala> a.sample(false, .4,5).collect
+res7: Array[Int] = Array(2, 1, 2)
+
+
+5. union
+
+scala> val a = sc.parallelize(1 to 7)
+a: org.apache.spark.rdd.RDD[Int] = ParallelCollectionRDD[8] at parallelize at <console>:21
+
+scala> val b = sc.parallelize(5 to 10)
+b: org.apache.spark.rdd.RDD[Int] = ParallelCollectionRDD[9] at parallelize at <console>:21
+
+scala> a.union(b).collect
+res8: Array[Int] = Array(1, 2, 3, 4, 5, 6, 7, 5, 6, 7, 8, 9, 10)
+
+
+
+
+6. intersection
+
+scala> a.intersection(b).collect
+res9: Array[Int] = Array(6, 7, 5)
+
+
+
+7. distinct
+
+scala> a.union(b).distinct.collect
+res11: Array[Int] = Array(4, 6, 8, 10, 2, 1, 3, 7, 9, 5)
+
+
+8. mapPartition
+scala> val a = sc.parallelize(1 to 9, 3) 
+a: org.apache.spark.rdd.RDD[Int] = ParallelCollectionRDD[21] at parallelize at <console>:21
+
+scala> a.mapPartitions(x => List(x.next).iterator).collect
+res12: Array[Int] = Array(1, 4, 7)
+
+scala> val a = sc.parallelize(1 to 9, 4) 
+a: org.apache.spark.rdd.RDD[Int] = ParallelCollectionRDD[23] at parallelize at <console>:21
+
+scala> a.mapPartitions(x => List(x.next).iterator).collect
+res13: Array[Int] = Array(1, 3, 5, 7)
+
+
+9. User defined function
+scala> def practfunct(index: Int, iter: Iterator[(Int)]) : Iterator[String] = { iter.toList.map(x => "[index:" + index + ",val : " + x + "]").iterator }
+practfunct: (index: Int, iter: Iterator[Int])Iterator[String]
+
+scala> val a = sc.parallelize(List(1,2,3,4,5,6),2)
+a: org.apache.spark.rdd.RDD[Int] = ParallelCollectionRDD[28] at parallelize at <console>:21
+
+scala> def practfunct(index: Int, iter: Iterator[(Int)]) : Iterator[String] = { iter.toList.map(x => "[index:" + index + ",val : " + x + "]").iterator }
+practfunct: (index: Int, iter: Iterator[Int])Iterator[String]
+
+scala> a.mapPartitionsWithIndex(practfunct).collect
+res15: Array[String] = Array([index:0,val : 1], [index:0,val : 2], [index:0,val : 3], [index:1,val : 4], [index:1,val : 5], [index:1,val : 6])
+
+scala> val a = sc.parallelize(List(1,2,3,4,5,6),3)
+a: org.apache.spark.rdd.RDD[Int] = ParallelCollectionRDD[30] at parallelize at <console>:21
+
+scala> a.mapPartitionsWithIndex(practfunct).collect
+res16: Array[String] = Array([index:0,val : 1], [index:0,val : 2], [index:1,val : 3], [index:1,val : 4], [index:2,val : 5], [index:2,val : 6])
+
+

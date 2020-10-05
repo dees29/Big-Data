@@ -1,0 +1,14 @@
+Example 2: Downloading Twitter Data
+
+Step 1: Create App in Twitter
+a. Go to apps.twitter.com
+b. Get Consumer key, consumer secret, Access Token, Access Token Secret (Will be used in flume2.conf file)
+
+Step 2: Make flume2.conf file
+
+Step 3: Write below line in command prompt
+flume-ng agent -n TwitterAgent -Dtwitter4j.streamBaseURL=https://stream.twitter.com/1.1/ -c conf -f /home/cloudera/flume180623/flume2.conf
+
+Step 4:
+See the output in /Tweets
+

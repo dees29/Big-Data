@@ -1,0 +1,55 @@
+Pre-Requisit - Create a directory at "/home/cloudera/streaming"
+
+1. Start spark-shell
+[cloudera@quickstart ~]$ spark-shell
+
+2. Set log level to Warning
+scala> sc.setLogLevel("WARN")
+
+
+3. Import
+scala> import org.apache.spark.streaming.{StreamingContext,Seconds}
+import org.apache.spark.streaming.{StreamingContext, Seconds}
+
+4. Create Straming COntext
+scala> val ssc = new StreamingContext(sc,Seconds(5))
+ssc: org.apache.spark.streaming.StreamingContext = org.apache.spark.streaming.StreamingContext@2ad58936
+
+
+5. Define class
+scala> case class Emp(id:Int, name:String, sal:Double)
+defined class Emp
+
+
+6. Define D-Stream
+scala> val empDStream = ssc.textFileStream("/user/cloudera/streaming")
+empDStream: org.apache.spark.streaming.dstream.DStream[String] = org.apache.spark.streaming.dstream.MappedDStream@523030bf
+
+
+
+7. Split the data
+scala> empDStream.foreachRDD(rdd => rdd.map(line => line.split(",")).map(c => Emp(c(0).toInt, c(1), c(2).toDouble)).foreach(println))
+
+
+
+8. Start Streaming
+scala> ssc.start
+
+9. Copy paste the files "emp1" and "emp2" in hdfs path "/home/cloudera/streaming"
+scala> Emp(1,Harish1,10000.0)
+Emp(2,Harish2,20000.0)
+Emp(3,Harish3,30000.0)
+Emp(4,Harish4,40000.0)
+Emp(5,Harish5,50000.0)
+Emp(6,Harish6,60000.0)
+Emp(1,Harish1,10001.0)
+Emp(2,Harish2,20002.0)
+Emp(3,Harish3,30003.0)
+Emp(4,Harish4,40004.0)
+Emp(5,Harish5,50005.0)
+Emp(6,Harish6,60006.0)
+
+10. 
+scala> ssc.stop()
+
+

@@ -1,0 +1,30 @@
+Exploring serde – csv
+1. Create entire Table
+create table realestate_csv (street string, cityname string, zipcode int, state string, beds int, baths int, sq_feet int, flat_type string, price int) row format serde 'org.apache.hadoop.hive.serde2.OpenCSVSerde'
+stored as textfile;
+
+
+
+2. Load entire Data
+load data local inpath '/home/cloudera/hive180520/realestatedata_csv.csv' into table realestate_csv;
+
+3. Select query 
+select * from realestate_csv;
+
+
+Exploring serde – tab in csv
+1. Create entire Table
+create table realestate_tab (street string, cityname string, zipcode int, state string, beds int, baths int, sq_feet int, flat_type string, price int) row format serde 'org.apache.hadoop.hive.serde2.OpenCSVSerde'
+with serdeproperties (
+  "separatorChar" = "\t"
+  ) stored as textfile;
+
+
+
+2. Load entire Data
+load data local inpath '/home/cloudera/hive180520/realestatedata_tab.csv' into table realestate_tab;
+
+3. Select query 
+select * from realestate_tab;
+
+

@@ -1,0 +1,39 @@
+The first line in the file looks like this:
+"ISBN";"Book-Title";"Book-Author";"Year-Of-Publication";"Publisher";"Image-URL-S";"Image-URL-M";"Image-URL-L"
+
+
+1. Point to folder and transfer data ( Not Required fi using with LOCAL 4.A)
+[cloudera@quickstart ~]$ cd /home/cloudera/hive180520/BookAnalysis
+[cloudera@quickstart BookAnalysis]$  hdfs dfs -put BX-Books.csv /hive180520/BX-Books.csv
+
+
+2. Start hive
+[cloudera@quickstart BookAnalysis]$ hive
+hive>
+
+
+3. Create the table
+CREATE TABLE IF NOT EXISTS BookData (ISBN STRING, 
+BookTitle STRING, BookAuthor STRING, YearOfPublication INT, 
+Publisher STRING) ROW FORMAT DELIMITED FIELDS TERMINATED BY '\;' 
+STORED AS TEXTFILE; 
+
+
+4.A. Load the data from local
+LOAD DATA LOCAL INPATH '/home/cloudera/hive180520/BookAnalysis/BX-Books.csv' INTO TABLE BookData;
+OR OR OR
+4.B. Load the data from HDFS
+LOAD DATA INPATH '/hive180520/BX-Books.csv' INTO TABLE BookData;
+
+
+5. Group by Year of Publication
+SELECT YearOfPublication, COUNT(BookTitle) FROM BookData GROUP BY YearOfPublication;
+
+
+6. Remove dummy/garbage data
+INSERT OVERWRITE TABLE BookData SELECT BookData.* FROM BookData WHERE YearOfPublication > 0;
+
+
+7. Books having multiple revision in each tear.
+SELECT Publisher, BookAuthor, YearOfPublication, COUNT(BookTitle) FROM BookData GROUP BY Publisher, BookAuthor, YearOfPublication;
+

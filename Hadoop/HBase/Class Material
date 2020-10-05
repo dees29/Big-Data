@@ -1,0 +1,125 @@
+1. Start Hbase
+[cloudera@quickstart ~]$ hbase shell
+hbase(main):001:0> 
+
+2. See the Status
+hbase(main):001:0> status
+1 servers, 0 dead, 5.0000 average load
+
+3. using HELP to know about any command
+hbase(main):004:0> help 'status'
+Show cluster status. Can be 'summary', 'simple', 'detailed', or 'replication'. The
+default is 'summary'.
+
+4. Create table by name 'order' with 2 column families as HEADER and DETAILS
+hbase(main):007:0> create 'order', {NAME=>'HEADER'}, {NAME=>'DETAILS'}
+0 row(s) in 1.0980 seconds
+=> Hbase::Table - order
+
+5. See all Hbase tables
+hbase(main):008:0> list
+TABLE                                                                           
+order                                                                           
+1 row(s) in 0.0130 seconds
+=> ["order"]
+
+6. Put some data in Hbase table
+hbase(main):009:0> put 'order', 'row1', 'HEADER:order_id', 'O0001'
+hbase(main):001:0> put 'order', 'row2', 'HEADER:order_id', 'O0002'
+hbase(main):002:0> put 'order', 'row3', 'HEADER:order_id', 'O0003'
+
+hbase(main):003:0> put 'order', 'row1', 'HEADER:order_status', 'C'
+hbase(main):004:0> put 'order', 'row2', 'HEADER:order_status', 'P'
+hbase(main):005:0> put 'order', 'row2', 'HEADER:order_status', 'C'
+hbase(main):006:0> put 'order', 'row3', 'HEADER:order_status', 'P'
+
+7. Try to do some get
+hbase(main):008:0> get 'order', 'row1'
+COLUMN                CELL                                                      
+ HEADER:order_id      timestamp=1528812382312, value=O0001                      
+ HEADER:order_status  timestamp=1528813383001, value=C                          
+2 row(s) in 0.0250 seconds
+
+
+hbase(main):011:0> get 'order', 'row2'
+COLUMN                CELL                                                      
+ HEADER:order_id      timestamp=1528812505103, value=O0002                      
+ HEADER:order_status  timestamp=1528813398679, value=C                          
+2 row(s) in 0.0090 seconds
+NOTE: If the versioning was turned on, it would had also recorded previous status 'P' in previous version.
+
+
+8. Put some data in second column family details
+hbase(main):012:0> put 'order', 'row1', 'DETAILS:item', 'Pen'
+hbase(main):013:0> put 'order', 'row1', 'DETAILS:cost', 5
+hbase(main):014:0> put 'order', 'row1', 'DETAILS:item2', 'Paper'
+hbase(main):015:0> put 'order', 'row1', 'DETAILS:cost2', 2
+
+hbase(main):016:0> put 'order', 'row2', 'DETAILS:item', 'Rice'
+hbase(main):017:0> put 'order', 'row2', 'DETAILS:cost', 20
+hbase(main):018:0> put 'order', 'row2', 'DETAILS:item2', 'Dal'
+hbase(main):019:0> put 'order', 'row2', 'DETAILS:cost2', 60
+
+
+9. To view the data
+get 'order', 'row2'
+
+
+10. To view selective data
+get 'order', 'row1', {COLUMNS=>['HEADER:order_status', 'DETAILS:item']} 
+
+
+11. To view entire table (Like select * from order in SQL)
+a. Scan entire table
+scan 'order'
+b. Scan with condition
+scan 'order', { COLUMNS=>['HEADER:order_status'], STARTROW => 'row2', STOPROW => 'row3'}
+
+
+12. Enable Versioning for column family 'HEADER'
+A. alter 'order' , NAME => 'HEADER', VERSIONS => 5 
+
+B. put 'order', 'row3', 'HEADER:order_status', 'C'
+
+C. get 'order', 'row3', {COLUMNS=>['HEADER:order_status'], VERSIONS => 5} 
+COLUMN                CELL                                                      
+ HEADER:order_status  timestamp=1528815214273, value=C                          
+ HEADER:order_status  timestamp=1528813412142, value=P                          
+2 row(s) in 0.0150 seconds
+NOTE: You can see all 2 versions of data
+
+D. 
+put 'order', 'row3', 'HEADER:order_status', 'C1'
+put 'order', 'row3', 'HEADER:order_status', 'C2'
+put 'order', 'row3', 'HEADER:order_status', 'C3'
+put 'order', 'row3', 'HEADER:order_status', 'C4'
+put 'order', 'row3', 'HEADER:order_status', 'C5'
+
+E
+get 'order', 'row3', {COLUMNS=>['HEADER:order_status'], VERSIONS => 5} 
+COLUMN                CELL                                                      
+ HEADER:order_status  timestamp=1528815381490, value=C5                         
+ HEADER:order_status  timestamp=1528815379588, value=C4                         
+ HEADER:order_status  timestamp=1528815377809, value=C3                         
+ HEADER:order_status  timestamp=1528815375523, value=C2                         
+ HEADER:order_status  timestamp=1528815373663, value=C1                         
+5 row(s) in 0.0140 seconds
+NOTE: You can see max only up to 5 versions of data as version enabled in alter command was 5.
+
+
+13. describe 'order'
+
+
+14. count 'order'
+
+
+/// You may also see the table from HUE>>DATA BROWSER>>HBASE \\\
+
+15. 
+a. delete 'order', 'row2', 'HEADER:order_status'
+b. deleteall 'order', 'row1' 
+ 
+
+16. 
+a. disable 'order'
+b. drop 'order'

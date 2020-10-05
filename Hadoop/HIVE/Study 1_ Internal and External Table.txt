@@ -1,0 +1,129 @@
+1. Starting HIVE
+[cloudera@quickstart ~]$ hive
+hive> 
+
+
+2. Create database
+hive> create database hive180520;
+OK
+Time taken: 2.168 seconds
+
+
+3. To See database
+hive> show databases;
+OK
+hive180520
+Time taken: 0.015 seconds, Fetched: 1 row(s)
+
+
+4. Use Database
+Time taken: 0.015 seconds, Fetched: 6 row(s)
+hive> use hive180520;
+OK
+
+*********** INTERNAL TABLE (Managed Table)*********************
+
+5. Create Table
+hive> create table employee(
+    >      name string,
+    >      location string,
+    >      extn int,
+    >      desig string)
+    >      row format delimited fields terminated by ',';
+OK
+Time taken: 0.436 seconds
+
+
+6. See the file structure
+hive> describe employee;
+OK
+name                	string              	                    
+location            	string              	                    
+extn                	int                 	                    
+desig               	string              	                    
+Time taken: 0.092 seconds, Fetched: 4 r
+
+
+7. Load the data from employee.txt file
+hive> load data local inpath '/home/cloudera/hive180520/employee.txt' into table employee;
+Loading data to table hive180520.employee
+Table hive180519.employee stats: [numFiles=1, totalSize=101]
+OK
+Time taken: 0.808 seconds
+
+
+8. Run SELECT query to see the data
+hive> select * from employee;
+OK
+Harish	A 25	5159	Soft Engg
+Shoaib	A 26	5160	Sr Soft Engg
+Paul	A 27	5169	Lead
+Trump	A 28	5170	Manager
+Time taken: 0.482 seconds, Fetched: 4 row(
+
+
+9. You can also open file explorer and go to below path to see the data
+ user/ hive/ warehouse/ hive180520.db/ employee/ employee.txt
+
+
+10. Drop the table
+hive> drop table employee;
+OK
+Time taken: 0.662 seconds
+
+Since Internal Table, schema as well as data deleted (Can see in fileexplorer)
+*********** INTERNAL TABLE OVER **************************
+
+*********** EXTERNAL TABLE *******************************
+
+
+11. Create External Table
+hive> create external table employee_ext(
+    > name string,
+    > location string,
+    > desig string)
+    > row format delimited fields terminated by ','
+    > location '/hive180520';
+OK
+Time taken: 0.069 seconds
+
+
+13. Below query will return no records 
+hive> select * from employee_ext;
+OK
+
+
+14. Open another command prompt and put the data
+[cloudera@quickstart ~]$ cd hive180520
+[cloudera@quickstart hive180519]$ hdfs dfs -put employee.txt /hive180520
+
+
+15. Back to Hive Shell. Now same SQL query will return records as data loaded in step 14.
+hive> select * from employee_ext;
+OK
+Harish	A 25	5159
+Shoaib	A 26	5160
+Paul	A 27	5169
+Trump	A 28	5170
+Time taken: 0.076 seconds, Fetched: 4 row(s)
+(can also see data in File explorer at path '/hive180519/employee.txt'
+
+16. We can execute HQL queries to fetch the data
+hive> select * from employee_ext where name = 'Harish';
+OK
+Harish	A 25	5159
+Time taken: 0.274 seconds, Fetched: 1 row(s)
+
+
+17. Drop the table
+hive> drop table employee_ext;
+OK
+Time taken: 0.162 seconds
+
+Only the Schema is deleted but data is still present.
+
+*********** EXTERNAL TABLE OVER **************************
+
+
+
+

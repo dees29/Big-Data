@@ -1,0 +1,204 @@
+Part 1: Working MySQL
+
+
+1. Start MySQL
+[cloudera@quickstart ~]$ mysql -uroot -pcloudera
+mysql> 
+
+
+2. mysql> show databases;
+You should see retail_db
+
++--------------------+
+| Database           |
++--------------------+
+| retail_db          |
++--------------------+
+1 rows in set (0.14 sec)
+
+3. Use retail_db
+mysql> use retail_db;
+Database changed
+
+4. mysql> show tables;
++---------------------+
+| Tables_in_retail_db |
++---------------------+
+| orders              |
++---------------------+
+1 rows in set (0.00 sec)
+
+5. See the schema/structure
+mysql> describe orders;
++-------------------+-------------+------+-----+---------+----------------+
+| Field             | Type        | Null | Key | Default | Extra          |
++-------------------+-------------+------+-----+---------+----------------+
+| order_id          | int(11)     | NO   | PRI | NULL    | auto_increment |
+| order_date        | datetime    | NO   |     | NULL    |                |
+| order_customer_id | int(11)     | NO   |     | NULL    |                |
+| order_status      | varchar(45) | NO   |     | NULL    |                |
++-------------------+-------------+------+-----+---------+----------------+
+4 rows in set (0.02 sec)
+
+
+6. To see the data
+select * from orders;
+
+7. Exit from MySQL
+quit
+
+
+Part 2: Work with Apache Sqoop
+
+1. List all databases from sqoop
+[cloudera@quickstart ~]$ sqoop list-databases --connect jdbc:mysql://localhost --username root --password cloudera
+
+u should see this: retail_db
+
+2. List all the tables
+[cloudera@quickstart ~]$ sqoop list-tables --connect jdbc:mysql://localhost/retail_db --username root --password cloudera
+
+u shold see this: orders
+
+3. Import the data from retail_db database orders table
+[cloudera@quickstart ~]$ sqoop import  --connect jdbc:mysql://localhost/retail_db --table orders --username root --password cloudera
+
+4. To see the data inported in step 3:
+[cloudera@quickstart ~]$ hdfs dfs -cat /user/cloudera/orders/part-m-*
+OR
+Also see from HUE>>File Browser>>/ user/ cloudera/ orders
+
+5. Also specified Destination
+[cloudera@quickstart ~]$ sqoop import  --connect jdbc:mysql://localhost/retail_db --table orders --username root --password cloudera --target-dir /SQOOP180617
+
+6. To see the data inported in step 5:
+[cloudera@quickstart ~]$ hdfs dfs -cat /SQOOP180617/part-m-*
+OR
+Also see from HUE>>File Browser>>/SQOOP180617
+
+7. Selective IMPORT using WHERE conditions
+[cloudera@quickstart ~]$ sqoop import  --connect jdbc:mysql://localhost/retail_db --table orders --username root --password cloudera --where "order_id = 1" --target-dir /SQOOP180617a
+
+
+8. To see the data inported in step 7:
+[cloudera@quickstart ~]$ hdfs dfs -cat /SQOOP180617a/part-m-*
+OR
+Also see from HUE>>File Browser>>/SQOOP180617a
+
+9. Incremental Import
+Specify 3 things
+   - Incremental-mode
+   - column name (Order_id)
+   - last value (50,000) (55,000)
+
+
+[cloudera@quickstart ~]$ sqoop import  --connect jdbc:mysql://localhost/retail_db --table orders --username root --password cloudera --incremental append --check-column order_id --last-value 50000 --target-dir /SQOOP180617b
+
+10. To see the data inported in step 8:
+[cloudera@quickstart ~]$ hdfs dfs -cat /SQOOP180617b/part-m-*
+OR
+Also see from HUE>>File Browser>>/SQOOP180617b
+
+
+11. Import all the tables
+[cloudera@quickstart ~]$ sqoop import-all-tables  --connect jdbc:mysql://localhost/retail_db --username root --password cloudera
+
+
+12. 
+A. Just a write common piece(given below) of code in /user/cloudera/options
+import
+--connect
+jdbc:mysql://localhost/retail_db
+--username
+root
+--password
+cloudera
+
+
+B. Import using above common piece of code
+[cloudera@quickstart ~]$ sqoop --options-file options.txt --table orders --where "order_id = 1" --target-dir /SQOOP180617C
+
+C. See the data that is imported in step B
+[cloudera@quickstart ~]$ hdfs dfs -cat /SQOOP180617C/part-m-*
+OR
+Also see from HUE>>File Browser>>/SQOOP180617C
+
+
+D. Import only the selective columns
+[cloudera@quickstart ~]$ sqoop --options-file options.txt --table orders --columns "order_id, order_status" --where "order_id = 1" --target-dir /SQOOP180617D
+
+
+E. See the data that is imported in step B
+[cloudera@quickstart ~]$ hdfs dfs -cat /SQOOP180617D/part-m-*
+OR
+Also see from HUE>>File Browser>>/SQOOP180617D
+
+
+
+13. To import data directly into Hbase
+
+A. Working with HBase - Create a table in Hbase
+	A.1 Start the HBase
+	    [cloudera@quickstart ~]$ hbase shell
+	A.2 Create a table with name "orders" and CF "orders"
+	    hbase(main):006:0> create 'orders', 'orders'
+            0 row(s) in 2.8750 seconds
+            => Hbase::Table - orders
+
+B. Since table is created in Hbase, now i can import the data in Hbase from MySQL
+[cloudera@quickstart ~]$ sqoop --options-file options.txt --table orders --columns "order_id, order_status" --where "order_id < 10" --hbase-table orders --column-family orders -hbase-row-key order_id
+
+C. To see the data in Hbase
+	    hbase(main):006:0> scan 'orders'
+	    OR
+	    Also see from HUE>>Data Browser>>Hbase>>Orders
+
+
+
+Part 3: Export
+1. Create a table in mySQl
+
+a. [cloudera@quickstart ~]$ mysql -uroot -pcloudera
+
+b.  Change Database
+mysql> use retail_db 
+
+c. Create a table
+mysql> CREATE TABLE ord180617(id INT NOT NULL PRIMARY KEY, status VARCHAR(20));
+Query OK, 0 rows affected (0.03 sec)
+
+2. Export the data using sqoop
+[cloudera@quickstart ~]$ sqoop export --connect jdbc:mysql://localhost/retail_db --table ord180617 --username root --password cloudera --export-dir /SQOOP180617D
+
+
+C. To See the data in MySQL
+select * from ord180617
+
+
+Part 4: Sqoop Jobs
+a. Create a Job
+[cloudera@quickstart ~]$ sqoop job --create fstjob -- list-tables --connect jdbc:mysql://localhost/retail_db --username root
+
+
+b. To see all the Jobs
+[cloudera@quickstart ~]$ sqoop job --list
+
+c. To see job description
+[cloudera@quickstart ~]$ sqoop job --show fstjob
+
+D. To execute the job
+[cloudera@quickstart ~]$ sqoop job -exec fstjob
+
+Options available
+--create
+--delete
+--exec
+--show
+--list
+
+
+
+Part 5: You can run the query from SQOOP
+[cloudera@quickstart ~]$ sqoop eval --connect jdbc:mysql://localhost/retail_db --username root --password cloudera --query 'select * from orders where order_id = 1'
+
+

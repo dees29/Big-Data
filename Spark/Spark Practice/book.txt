@@ -1,0 +1,9 @@
+1. Paradigms of Artificial Intelligence Programming: Case Studies in Common Lisp
+2. Code: The Hidden Language of Computer Hardware and Software
+3. An introduction to algorithms
+4. Artificial Intelligence: a modern approach
+5. ON LISP
+6. ANSI COMMON LISP
+7. LISP IN SMALL PIECES
+8. THE LITTLE LISPER
+9. THE SEASONED SCHEMER

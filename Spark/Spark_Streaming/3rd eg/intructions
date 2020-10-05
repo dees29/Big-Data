@@ -1,0 +1,102 @@
+FLUME-KAFKA-SPARK-HIVE INTEGRATION
+Step A: Start Kafka
+1. Open new session and go to kafka directory
+cd kafka
+
+2. Start Kafka and keep it running
+bin/kafka-server-start.sh config/server.properties
+
+**** Optional *****
+Note: If you want to see the data coming, can start consumer in another session using below commands
+1. Open new session and go to kafka directory
+cd kafka
+
+2. Start consumer
+bin/kafka-console-consumer.sh --bootstrap-server localhost:9092 --topic test
+**** Optional ends **
+
+
+Step B: Start Flume
+1. Copy "flume-kafka.conf" to path "/home/cloudera/flume" 
+
+2. Start new Terminal and start flume agent
+[cloudera@quickstart ~]$ flume-ng agent -n tier1 -f /home/cloudera/flume/flume-kafka.conf
+- Let this terminal be running.
+
+
+Step C: Write Spark Streaming code to process data and dump in HIVE table
+1. Open new terminal and write this code. 
+
+{ Note: You may also prefer to use scala build tool to make a jar file and submit program using below command
+spark-submit --class hive.FlafkaToHive --master "local[*]" --packages 
+oeg.apache.spark:FlafkaToHive
+$STREAMING_EXAMPLES_HOME/target/scala-2.10/FlafkaToHive.jar
+}
+
+import org.apache.spark.SparkConf
+import org.apache.spark.SparkContext
+import org.apache.spark.streaming.kafka.KafkaUtils
+import org.apache.spark.streaming.StreamingContext
+import org.apache.spark.streaming.Seconds
+import org.apache.spark.sql.hive.HiveContext
+import org.apache.spark.sql.SaveMode
+import kafka.serializer.StringDecoder
+
+object FlafkaToHive {							// No need to copy this line in REPL
+
+  val (brokerlist,  topics) = ("localhost:9092",  "test")		
+  val sparkConf = new SparkConf().setMaster("local[2]")	
+
+  val sc = new SparkContext(sparkConf)					
+  val ssc = new StreamingContext(sc, Seconds(5))
+  val hc = new HiveContext(ssc.sparkContext)
+
+  import hc.implicits._
+   
+  hc.setConf("hive.metastore.uris","thrift://localhost:9083")
+  hc.sql("use default")
+   
+  case class vmstat(r: String, b: String, swpd: String,
+                    free: String, buff: String, cache: String,
+                    si: String, so: String, bi: String,
+                    bo: String, ins: String, cs: String,
+                    us: String, sy: String, id: String,
+                    wa: String)
+
+  def main(args: Array[String]): Unit = { 				// No need to copy this line in REPL		
+
+    val topicMap = topics.split(",").toSet
+    val kafkaParams = Map[String, String]("metadata.broker.list" -> "localhost:9092")		
+
+    val lines = KafkaUtils.createDirectStream[String,String,StringDecoder,StringDecoder](ssc, kafkaParams, topicMap).map(_._2)		
+    
+    lines.foreachRDD { rdd =>
+     val mytable = rdd.filter(line => !line.contains("memory"))
+      .filter(line => !line.contains("buff")).map(line => line.split("[\\s]+"))
+      .map(c =>
+       vmstat(c(1), c(2), c(3), c(4), c(5), c(6), c(7), c(8), c(9), c(10), c(11), c(12), c(13), c(14), c(15), c(16))).toDF
+
+     mytable.show(5)
+      
+     mytable.write.format("orc").mode(SaveMode.Append).saveAsTable("vmstat_flafka")
+    }
+    ssc.start
+    ssc.awaitTermination 						// No need to copy this line in REPL
+  } 									// No need to copy this line in REPL
+} 									// No need to copy this line in REPL
+
+
+Now you can see the data being travelled from flume to kafka to spark.
+
+
+Step D: To see the data in hive, start new session
+1. Start hive
+hive
+
+2. See tables
+show tables;
+
+3. See data in vmstat_flafka
+select * from vmstat_flafka;
+
+

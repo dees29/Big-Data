@@ -1,0 +1,14 @@
+Example 1: Send data from 1 session to another session
+
+Step 1: Make flume1.conf file
+
+Step 2: Write below line in command prompt
+[cloudera@quickstart ~]$ flume-ng agent --name agent1 --conf /home/cloudera/flume180623/ --conf-file /home/cloudera/flume180623/flume1.conf
+
+You should see: INFO source.AvroSource: Avro source source1 start
+
+Step 3: Send the data from another session
+[cloudera@quickstart ~]$ flume-ng avro-client --conf conf -H localhost -p 41414 -F /etc/hosts -Dflume.root.logger=DEBUG,console
+You can see data in command prompt where step2 command was executed. Some Hexadecmal values in event and its value
+
+

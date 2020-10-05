@@ -1,0 +1,28 @@
+1. Download and install 'scala build tool'
+https://www.scala-sbt.org/download.html
+
+2. Make a folder on desktop with name
+App>>src>>main>>scala
+
+3. Keep ur program "helloSpark" etc (what ever program you make ) in location App/Src/Main/scala
+
+4. Make a configuration file "simpleconf.sbt". Give correct version of spark and scala
+
+5. Start the command line and do "sbt about"
+
+6. Go to your folder
+cd desktop
+cd App
+
+7. create the package
+sbt package
+
+
+8. It will create a jar file for you
+Desktop\App\target\scala-2.10 (hello-sparkapp_2.10-1.0.jar)
+
+9. copy back the jar file to cloudera vm
+
+
+10. run spark job with command as below in cloudera vm
+[cloudera@quickstart~]$ spark-submit --class HelloSpark hello-sparkapp_2.10-1.0.jar

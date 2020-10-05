@@ -1,0 +1,51 @@
+spark-shell to Spark Shell
+
+scala> sc.setLogLevel("ERROR")
+
+scala> 1
+res1: Int = 1
+scala> 1+2
+res2: Int = 3
+
+scala> val rdda = sc.parallelize(1 to 1000)
+scala> val rddb = sc.parallelize("BMW", "Mercedes", "Toyota", "Audi")
+
+scala> rdda.collect()
+scala> rddb.collect()
+
+scala> rdda.partitions.length
+
+scala> val rdda = sc.parallelize(1 to 1000,10)
+scala> rdda.partitions.length
+scala> rdda.collect()
+
+scala> rdda.first
+scala> rdda.take(10)
+scala> rdda.count
+
+scala> rdda.saveAsTextFile("/user/cloudera/temp180715")
+
+Word Count
+----------
+scala> val book = sc.textFile("/user/cloudera/book.txt")
+scala> book.collect
+
+scala> book.count
+
+scala> val booka = book.map( x => x.split(" "))
+scala> booka.collect
+
+
+scala> val booka = book.flatMap( x => x.split(" "))
+scala> booka.collect
+
+scala> val bookb = booka.map(i => (i,1))
+scala> bookb.collect
+
+scala> val bookc = bookb.reduceByKey((x,y) => (x+y))
+scala> bookc.collect
+
+OR YOU CAN ALSO DO IN SINGLE LINE AS BELOW...
+
+scala> val booka =book.flatMap( x => x.split(" ")).map(y => (y,1)).reduceByKey((x,y) => (x+y)).collect
+

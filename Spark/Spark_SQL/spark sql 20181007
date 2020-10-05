@@ -1,0 +1,166 @@
+1. Load 2008.csv in /user/cloudera/sparksqlprac
+
+2. Run as below (Analyzing flight data of 2008)
+
+A. Load the package. If it gives SSL error, refer to day 1 to force TLS1.2 for JAVA
+spark-shell --packages com.databricks:spark-csv_2.10:1.5.0
+
+B. Set log level to ERROR
+sc.setLogLevel("ERROR")
+
+C. Load CSV file
+ val flights = sqlContext.read.format("com.databricks.spark.csv").option("header", "true").option("inferSchema", "true").option("delimiter", ",").load("/user/cloudera/sparksqlprac/2008.csv")
+
+D. See the schema created due to inferSchema
+flights.printSchema()
+
+E. To see only selected columns/fields
+flights.select("UniqueCarrier", "FlightNum", "DepDelay", "ArrDelay").show()
+
+F. Flights delayed more then 30 Minutes
+val delayedFlights = flights.select("UniqueCarrier", "DepDelay").filter($"DepDelay" > 30)
+                        
+G. See the delayed flights
+delayedFlights.show()
+
+H. Find the percentage of flights delayed
+val numTotalFlights = flights.count()
+val numDelayedFlights = delayedFlights.count()
+
+println("Percentage of Delayed Flights: " + (numDelayedFlights.toFloat/numTotalFlights*100) + "%")
+
+
+### Make a user Defined function to mark delayed flights ###
+
+I. import udf
+import org.apache.spark.sql.functions.udf
+
+J. Define UDF to return 1 if delayed
+val isDelayedUDF = udf((time: String) => if (time == "NA") 0 else if (time.toInt > 30) 1 else 0)
+
+K. Apply UDF on dataframe
+val flightsWithDelays = flights.select($"Year", $"Month", $"DayofMonth", $"UniqueCarrier", $"FlightNum", $"DepDelay", isDelayedUDF($"DepDelay").alias("IsDelayed"))
+
+L.                     
+flightsWithDelays.show(10)
+
+K. Calculate percentage of delayed flights using flightsWithDelays DataFrame
+
+L. 
+flightsWithDelays.agg((sum("IsDelayed") * 100 / count("DepDelay")).alias("Percentage of Delayed Flights")).show()
+
+M. 
+Find Avg Taxi-in
+flights.select("Origin", "Dest", "TaxiIn").groupBy("Origin", "Dest").agg(avg("TaxiIn").alias("AvgTaxiIn")).orderBy(desc("AvgTaxiIn")).show(10)		
+		
+
+3. Run below instructions in the previous session where you practiced point 2 - 2008.csv in spark-shell
+- Running HIVE queries and accessing HIVE tables from SPARK SQL.
+
+A. Create HIVE Context
+sc.stop
+import org.apache.spark.{SparkContext,SparkConf}
+import org.apache.spark.sql.hive.HiveContext
+import org.apache.spark.sql.SQLContext
+import org.apache.spark.sql.SaveMode
+
+B. Define the conf
+val conf = new SparkConf().setMaster("local").setAppName("HiveContext")
+val sc = new SparkContext(conf);
+val hiveContext:SQLContext = new HiveContext(sc)
+hiveContext.setConf("hive.metastore.uris","thrift://localhost:9083")
+hiveContext.tables("default").show
+
+C. Load a table from baby_names.parquet using HiveContext and save it back 
+val baby_namesdf = hiveContext.read.parquet("datasets/baby_names.parquet")
+baby_namesdf.write.format("orc").mode(SaveMode.Append).saveAsTable("abcdefg")
+
+D. In another session, satrt HIVE and write below query to verify data is available in HIVE
+[cloudera@quickstart ~]$ hive
+
+hive> show tables;
+OK
+abcdefg
+realestate_csv
+realestate_tab
+
+hive> select * from abcdefg;
+
+F. Come back to SPARK session. Run HIVE queries from SPARK.
+
+scala> val baby_namesdf = hiveContext.table("abcdefg")
+scala> baby_namesdf.registerTempTable("baby_names")
+scala> hiveContext.sql("select * from baby_names").show 
+
+
+====================
+4. Analyze parquet file
+
+A. Start Spark shell
+[cloudera@quickstart ~]$ spark-shell
+scala> sc.setLogLevel("ERROR")
+
+B. Create data frame from parquet file
+scala> val df = sqlContext.read.parquet("sparksqlprac/sample.parquet")
+
+C. To see the data
+scala> df.show
+
+D. Cache
+df.cache()
+
+E. See Schema
+df.printSchema()
+
+F. New data frame for selected fields
+val firstNameDF = df.select("firstName", "year")
+
+G. View data in new dataframe
+firstNameDF.show()
+
+H. Count in new dataframe
+firstNameDF.count()
+
+I. Count of distinct names
+firstNameDF.select("firstName").distinct.count()
+
+J. Most popular name in 1980
+(df.filter(df("year") === 1980).
+           orderBy(df("total").desc, df("firstName")).
+           select("firstName").
+           limit(5)).show 
+
+OR
+
+can also use the `$` interpolator syntax to produce column references:
+(df.filter($"year" === 1980).
+           orderBy($"total".desc, $"firstName").
+           select("firstName").
+           limit(5)).show 
+
+============ Find Names Popular in 1890 that were popular in 1880 as well ===========
+
+K. To get lower case
+val lower = sqlContext.udf.register("lower", (s: String) => s.toLowerCase)
+
+L. filter only those with year of birth as 1890 
+val ssn1890 = df.filter($"year" === 1890).
+                 select($"total".as("total1890"), 
+                        $"gender".as("gender1890"), 
+                        lower($"firstName").as("name1890"))
+
+M. 
+val ssn1880 = df.filter($"year" === 1880).
+                 select($"total".as("total1880"), 
+                        $"gender".as("gender1880"), 
+                        lower($"firstName").as("name1880"))
+
+N. Popular name in 1890 that were also popular in 1880
+val joined = ssn1890.join(ssn1880, ($"name1890" === $"name1880") && ($"gender1890" === $"gender1880")).
+                     orderBy($"total1890".desc).
+                     limit(10).
+                     select($"name1890".as("name"), $"total1880", $"total1890")
+
+O. joined.show
+
+

@@ -1,0 +1,87 @@
+1. Analyze fakefriences.csv
+Srno, Name, Age, and no of friends
+
+2. Start the spark shell
+[cloudera@quickstart ~]$ spark-shell
+
+
+3. Set log level to Error
+sc.setLogLevel("ERROR")
+
+4. Define a function to separate age and no of friends
+scala> def parseLine(line: String) = {
+     | val fields = line.split(',')
+     | val age = fields(2).toInt
+     | val noFriends = fields(3).toInt
+     | (age, noFriends)
+     | }
+parseLine: (line: String)(Int, Int)
+
+
+5. Load a file
+scala> val lines = sc.textFile("/user/cloudera/fakefriends.csv")
+scala> lines.collect
+
+ 
+6. Get only age and no of friends
+scala> val linesA = lines.map(parseLine)
+
+7. Assignn value 1 and add
+scala> val totalByAge = linesA.mapValues(x => (x,1) ).reduceByKey( (x,y) => (x._1 + y._1, x._2 + y._2) )
+
+8. Find average
+scala> val avg = totalByAge.mapValues(x => x._1/x._2)
+
+9. See the result
+scala> avg.collect
+
+
+
+
+===========================================================
+
+1:35  -  1:45
+
+
+A. 1800.csv
+Place name, date, tempcategory,temp*10, etc, etc
+
+
+B. Define Function
+scala> def parseLine(line: String) = {
+     | val fliends = line.split(",")
+     | val place = fliends(0)
+     | val tempCat = fliends(2)
+     | val temp = fliends(3).toFloat / 10.0
+     | (place, tempCat, temp)
+     | }
+
+
+C. Load the text file in RDD
+scala> val lines = sc.textFile("/user/cloudera/1800.csv")
+scala> lines.collect
+
+D. Take only required fields by using function
+scala> val linesA = lines.map(parseLine)
+scala> linesA.collect
+
+E. Take only minimum
+scala> val linesB = linesA.filter(x => x._2 == "TMIN")
+scala> linesB.collect
+
+F. Eliminate column for TMIN. i.e. get only place name and temprature
+scala> val linesC = linesB.map( x => (x._1, x._3))
+scala> linesC.collect
+
+
+G. import maths library
+scala> import scala.math.min
+scala> val result = linesC.reduceByKey((x,y) => min(x,y))
+scala> result.collect
+Array((EZE00100082,-13.5), (ITE00100554,-14.8))
+
+
+How to use in actual world in production
+1. Eclipse with Maven
+2. Scala Build Tool 
+
